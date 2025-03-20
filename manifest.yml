@@ -1,0 +1,21 @@
+modules:
+  jiraServiceManagement:portalUserMenuAction:
+    - key: fitsearch-portal-user-menu-action
+      resource: main
+      resolver:
+        function: resolver
+      render: native
+      title: FIT ID Search
+      unlicensedAccess:
+        - unlicensed
+        - customer
+  function:
+    - key: resolver
+      handler: index.handler
+resources:
+  - key: main
+    path: src/frontend/index.jsx
+app:
+  runtime:
+    name: nodejs22.x
+  id: ari:cloud:ecosystem::app/ae19c8b8-33e0-4e60-8bf4-54b8f2fb092a
