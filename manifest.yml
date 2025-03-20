@@ -15,7 +15,7 @@ modules:
 
   function:
     - key: resolvers
-      handler: index.getUsers  # Function must be inside src/index.js
+      handler: index.getUsers # Function must be inside src/index.js
 
 resources:
   - key: main
@@ -24,7 +24,7 @@ resources:
     path: src/frontend/edit.jsx
 
 app:
-  id: ari:cloud:ecosystem::app/37e6f852-67fe-4b35-9556-5f2d1278c940
+  id: ari:cloud:ecosystem::app/2d5312e2-9dbd-41a3-b352-217fe9e12c67
   runtime:
     name: nodejs22.x
 
@@ -54,4 +54,4 @@ permissions:
     - read:organization:jira-service-management
     - read:organization.user:jira-service-management
     - write:organization.user:jira-service-management
-    - read:servicedesk.customer:jira-service-management  # Required for reading organization users
+    - read:servicedesk.customer:jira-service-management # Required for reading organization users

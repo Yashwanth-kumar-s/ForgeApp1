@@ -1,20 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ForgeReconciler, { Select } from '@forge/react';
-import { CustomFieldEdit} from '@forge/react/jira';
-import { invoke } from '@forge/bridge';
-import { view } from '@forge/bridge';
+import { CustomFieldEdit } from '@forge/react/jira';
+import { invoke, view } from '@forge/bridge';
 
 const Edit = () => {
   const [value, setValue] = useState('');
   const [options, setOptions] = useState([]);
-
+  
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchProjectContext = async () => {
       try {
-        console.log('[Edit Component] Calling getUsers function...');
-        const users = await invoke('getUsers');
+        // Get project context from Jira UI
+        const context = await view.getContext();
+        const projectId = context.extension.project.id; // Fetch Project ID
+
+        console.log(`Project ID from context: ${projectId}`);
+
+        // Call resolver with project ID to fetch org users
+        const users = await invoke('getUsers', { projectId });
+
         console.log('[Edit Component] Received users:', users);
-        
+
         if (Array.isArray(users)) {
           const formattedOptions = users.map(user => ({
             label: user.displayName,
@@ -27,7 +33,7 @@ const Edit = () => {
       }
     };
 
-    fetchUsers();
+    fetchProjectContext();
   }, []);
 
   const onSubmit = useCallback(async () => {

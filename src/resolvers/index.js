@@ -1,29 +1,56 @@
 import api, { route } from '@forge/api';
 
 export async function getUsers() {
-  const organizationId = 1; // Replace with the correct organization ID if needed
-  const url = route`/rest/servicedeskapi/organization/${organizationId}/user`;
+  const projectKey = 'PBEETHOVER'; // Set your Jira project key
 
   try {
-    console.log(`Calling API: ${url}`);
+    console.log(`Fetching organization for project: ${projectKey}`);
 
-    // Use asUser() for user-level permissions
-    const response = await api.asApp().requestJira(url, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    });
+    // Step 1: Get the Organization ID from the service desk project
+    const orgResponse = await api.asApp().requestJira(
+      route`/rest/servicedeskapi/servicedesk/${projectKey}/organization`,
+      {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`Error: ${response.status} - ${response.statusText}`);
+    if (!orgResponse.ok) {
+      const errorData = await orgResponse.json();
+      console.error(`Error: ${orgResponse.status} - ${orgResponse.statusText}`);
       console.error("Error Details:", JSON.stringify(errorData, null, 2));
       return [];
     }
 
-    const data = await response.json();
-    console.log("Parsed JSON Data:", JSON.stringify(data, null, 2));
+    const orgData = await orgResponse.json();
+    if (!orgData.values || orgData.values.length === 0) {
+      console.warn("No organizations found for the project.");
+      return [];
+    }
 
-    return data.values || [];
+    const organizationId = orgData.values[0].id; // Take the first org ID
+    console.log(`Found Organization ID: ${organizationId}`);
+
+    // Step 2: Fetch Users from the Organization
+    const userResponse = await api.asApp().requestJira(
+      route`/rest/servicedeskapi/organization/${organizationId}/user`,
+      {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }
+    );
+
+    if (!userResponse.ok) {
+      const errorData = await userResponse.json();
+      console.error(`Error: ${userResponse.status} - ${userResponse.statusText}`);
+      console.error("Error Details:", JSON.stringify(errorData, null, 2));
+      return [];
+    }
+
+    const userData = await userResponse.json();
+    console.log("Fetched Users:", JSON.stringify(userData, null, 2));
+
+    return userData.values || [];
   } catch (error) {
     console.error("API Fetch Error:", error);
     return [];
