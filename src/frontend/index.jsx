@@ -1,38 +1,19 @@
-import React, { useState } from 'react';
-import ForgeReconciler, {Text, Button, PortalUserMenuAction, ModalDialog, Select} from '@forge/react';
+import React, { useState, useEffect } from 'react';
+import ForgeReconciler, { Text } from '@forge/react';
+import { view } from '@forge/bridge';
 import { invoke } from '@forge/bridge';
 
+const View = () => {
+  const [fieldValue, setFieldValue] = useState(null);
 
-const App = () => {
-    const [isOpen, setOpen] = useState(true);
-    const [options, setOptions] = useState([]);
-
-    invoke('getRequestUrlFromFitId', { fitId: '123' }).then((response) => {
-        console.log(response);
-        setOptions(response);
+  useEffect(() => {
+    view.getContext().then((context) => {
+      console.log('[View Component] Field Value:', context.extension.fieldValue);
+      setFieldValue(context.extension.fieldValue);
     });
+  }, []);
 
-    const handleButton = () => {
-        console.log('Hello world!');
-    }
-
-
-
-    if (!isOpen) {
-        return null;
-    }
-
-    return (
-        <ModalDialog header="Hello" onClose={() => setOpen(false)}>
-            <Text>Hello world!</Text>
-            <Select label="Select" name="select" options={options} />
-            <Button text="Click me" onClick={handleButton} />
-        </ModalDialog>
-    );
+  return <Text>{`Selected User: ${fieldValue || 'None'}`}</Text>;
 };
 
-export const run = ForgeReconciler.render(
-    <PortalUserMenuAction>
-        <App/>
-    </PortalUserMenuAction>
-);
+ForgeReconciler.render(<View />);
