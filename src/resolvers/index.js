@@ -4,28 +4,10 @@ export const getUsers = async (context) => {
   // Log the entire context object for debugging
   console.log("Context:", JSON.stringify(context, null, 2));
 
-  // Extract issueKey from the nested context object
-  const issueKey = context.context.extension.issue.key;
+  // Extract projectKey directly from the context
+  const projectKey = context.context.extension.project.key;
 
-  // Log the extracted issueKey
-  console.log(`Extracted Issue Key: ${issueKey}`);
-
-  if (!issueKey) {
-    console.error("Issue Key is not available in the context.");
-    throw new Error("This custom field must be used in the context of an issue.");
-  }
-
-  // Fetch issue details to get the project key
-  console.log(`Fetching issue details for issueKey: ${issueKey}`);
-  const issueResponse = await api.asApp().requestJira(route`/rest/api/3/issue/${issueKey}`);
-  if (!issueResponse.ok) {
-    console.error(`Failed to fetch issue details: ${issueResponse.status} ${issueResponse.statusText}`);
-    throw new Error("Unable to fetch issue details.");
-  }
-  const issueData = await issueResponse.json();
-
-  // Extract projectKey from issue details
-  const projectKey = issueData.fields.project.key;
+  // Log the extracted projectKey
   console.log(`Extracted Project Key: ${projectKey}`);
 
   // Fetch organization ID for the project

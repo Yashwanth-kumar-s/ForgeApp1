@@ -25,14 +25,14 @@ const Edit = () => {
         if (Array.isArray(users) && users.length > 0) {
           const formattedOptions = users.map(user => ({
             label: user.displayName, // Display the user's name in the dropdown
-            value: user.accountId   // Store the user's account ID as the value
+            value: user.displayName   // Store the user's display name as the value
           }));
           setOptions(formattedOptions);
           setFilteredOptions(formattedOptions); // Initialize filtered options with all users
 
           // Restore previous selection if exists
           if (context.extension.fieldValue) {
-            setValue(context.extension.fieldValue); // Restore accountId
+            setValue(String(context.extension.fieldValue)); // Ensure the value is a string
           }
         }
       } catch (error) {
@@ -57,20 +57,33 @@ const Edit = () => {
     try {
       console.log('[Edit Component] Submitting value:', value);
 
-      // Submit the selected user's accountId
-      await view.submit(value);
+      // Submit the selected value as a plain string
+      await view.submit(value); // Submit the value directly as a string
       console.log('[Edit Component] Submitted field value:', value);
     } catch (e) {
       console.error('[Edit Component] Submit Error:', e);
     }
   }, [value]);
 
+  const handleChange = async (selectedOption) => {
+    const selectedValue = String(selectedOption.value); // Ensure the value is a string
+    setValue(selectedValue);
+
+    try {
+      // Save the selected value immediately as a plain string
+      await view.submit(selectedValue); // Submit the value directly as a string
+      console.log('[Edit Component] Saved field value:', selectedValue);
+    } catch (error) {
+      console.error('[Edit Component] Error saving field value:', error);
+    }
+  };
+
   return (
     <CustomFieldEdit onSubmit={onSubmit} hideActionButtons>
       <Select
         appearance="default"
         options={filteredOptions} // Use filtered options for the dropdown
-        onChange={(e) => setValue(e.value)} // Set the selected account ID
+        onChange={handleChange} // Save the selected value immediately
         onInputChange={onInputChange} // Filter options based on user input
         value={options.find(option => option.value === value) || null} // Persist the selected value
         isLoading={isLoading}
