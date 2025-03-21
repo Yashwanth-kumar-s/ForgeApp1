@@ -6,6 +6,7 @@ import { invoke, view } from '@forge/bridge';
 const Edit = () => {
   const [value, setValue] = useState('');
   const [options, setOptions] = useState([]);
+  const [filteredOptions, setFilteredOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -23,10 +24,11 @@ const Edit = () => {
 
         if (Array.isArray(users) && users.length > 0) {
           const formattedOptions = users.map(user => ({
-            label: user.displayName, // Display the user's account ID in the dropdown
-            value: user.displayName  // Store the user's account ID as the value
+            label: user.displayName, // Display the user's name in the dropdown
+            value: user.displayName   // Store the user's account ID as the value
           }));
           setOptions(formattedOptions);
+          setFilteredOptions(formattedOptions); // Initialize filtered options with all users
 
           // Restore previous selection if exists
           if (context.extension.fieldValue) {
@@ -43,6 +45,14 @@ const Edit = () => {
     fetchProjectContext();
   }, []);
 
+  const onInputChange = (inputValue) => {
+    // Filter options based on the input value
+    const filtered = options.filter(option =>
+      option.label.toLowerCase().includes(inputValue.toLowerCase())
+    );
+    setFilteredOptions(filtered);
+  };
+
   const onSubmit = useCallback(async () => {
     try {
       console.log('[Edit Component] Submitting value:', value);
@@ -58,10 +68,12 @@ const Edit = () => {
     <CustomFieldEdit onSubmit={onSubmit} hideActionButtons>
       <Select
         appearance="default"
-        options={options}
+        options={filteredOptions} // Use filtered options for the dropdown
         onChange={(e) => setValue(e.value)} // Set the selected account ID
+        onInputChange={onInputChange} // Filter options based on user input
         value={options.find(option => option.value === value) || null} // Persist the selected value
         isLoading={isLoading}
+        placeholder="Type to search users..."
       />
     </CustomFieldEdit>
   );
