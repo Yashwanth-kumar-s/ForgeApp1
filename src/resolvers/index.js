@@ -1,63 +1,78 @@
-import api, { route } from '@forge/api';
+import api, { route } from "@forge/api";
 
-export async function getUsers() {
-  const projectKey = 'PBEETHOVER'; // Set your Jira project key
+export const getUsers = async (context) => {
+  // Log the entire context object for debugging
+  console.log("Context:", JSON.stringify(context, null, 2));
 
-  try {
-    console.log(`Fetching organization for project: ${projectKey}`);
+  // Extract issueKey from the nested context object
+  const issueKey = context.context.extension.issue.key;
 
-    // Step 1: Get the Organization ID from the service desk project
-    const orgResponse = await api.asApp().requestJira(
-      route`/rest/servicedeskapi/servicedesk/${projectKey}/organization`,
-      {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      }
-    );
+  // Log the extracted issueKey
+  console.log(`Extracted Issue Key: ${issueKey}`);
 
-    if (!orgResponse.ok) {
-      const errorData = await orgResponse.json();
-      console.error(`Error: ${orgResponse.status} - ${orgResponse.statusText}`);
-      console.error("Error Details:", JSON.stringify(errorData, null, 2));
-      return [];
-    }
-
-    const orgData = await orgResponse.json();
-    if (!orgData.values || orgData.values.length === 0) {
-      console.warn("No organizations found for the project.");
-      return [];
-    }
-
-    const organizationId = orgData.values[0].id; // Take the first org ID
-    console.log(`Found Organization ID: ${organizationId}`);
-
-    // Step 2: Fetch Users from the Organization
-    const userResponse = await api.asApp().requestJira(
-      route`/rest/servicedeskapi/organization/${organizationId}/user`,
-      {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      }
-    );
-
-    if (!userResponse.ok) {
-      const errorData = await userResponse.json();
-      console.error(`Error: ${userResponse.status} - ${userResponse.statusText}`);
-      console.error("Error Details:", JSON.stringify(errorData, null, 2));
-      return [];
-    }
-
-    const userData = await userResponse.json();
-    console.log("Fetched Users:", JSON.stringify(userData, null, 2));
-
-    return userData.values || [];
-  } catch (error) {
-    console.error("API Fetch Error:", error);
-    return [];
+  if (!issueKey) {
+    console.error("Issue Key is not available in the context.");
+    throw new Error("This custom field must be used in the context of an issue.");
   }
-}
+
+  // Fetch issue details to get the project key
+  console.log(`Fetching issue details for issueKey: ${issueKey}`);
+  const issueResponse = await api.asApp().requestJira(route`/rest/api/3/issue/${issueKey}`);
+  if (!issueResponse.ok) {
+    console.error(`Failed to fetch issue details: ${issueResponse.status} ${issueResponse.statusText}`);
+    throw new Error("Unable to fetch issue details.");
+  }
+  const issueData = await issueResponse.json();
+
+  // Extract projectKey from issue details
+  const projectKey = issueData.fields.project.key;
+  console.log(`Extracted Project Key: ${projectKey}`);
+
+  // Fetch organization ID for the project
+  console.log(`Fetching organization details for projectKey: ${projectKey}`);
+  const orgResponse = await api.asApp().requestJira(
+    route`/rest/servicedeskapi/servicedesk/${projectKey}/organization`
+  );
+  if (!orgResponse.ok) {
+    console.error(`Failed to fetch organization details: ${orgResponse.status} ${orgResponse.statusText}`);
+    throw new Error("Unable to fetch organization details.");
+  }
+  const orgData = await orgResponse.json();
+
+  // Log the full organization data for debugging
+  console.log(`Organization Data: ${JSON.stringify(orgData, null, 2)}`);
+
+  // Extract organizationId
+  const organizationId = orgData.values[0]?.id; // Assuming the first organization is used
+  console.log(`Extracted Organization ID: ${organizationId}`);
+
+  if (!organizationId) {
+    console.error("No organization ID found for the project.");
+    throw new Error("No organization ID found for the project.");
+  }
+
+  // Fetch users from the organization
+  console.log(`Fetching users for organizationId: ${organizationId}`);
+  const usersResponse = await api.asApp().requestJira(
+    route`/rest/servicedeskapi/organization/${organizationId}/user`
+  );
+  if (!usersResponse.ok) {
+    console.error(`Failed to fetch users: ${usersResponse.status} ${usersResponse.statusText}`);
+    throw new Error("Unable to fetch users.");
+  }
+  const usersData = await usersResponse.json();
+
+  // Log the fetched users
+  console.log(`Fetched Users: ${JSON.stringify(usersData.values, null, 2)}`);
+
+  // Return the list of users
+  return usersData.values.map((user) => ({
+    id: user.accountId,
+    displayName: user.displayName,
+  }));
+};
 
 // Export handler for manifest usage
-export const handler = async () => {
-  return await getUsers();
+export const handler = async (context) => {
+  return await getUsers(context);
 };

@@ -25,14 +25,14 @@ const Edit = () => {
         if (Array.isArray(users) && users.length > 0) {
           const formattedOptions = users.map(user => ({
             label: user.displayName, // Display the user's name in the dropdown
-            value: user.displayName   // Store the user's account ID as the value
+            value: user.accountId   // Store the user's account ID as the value
           }));
           setOptions(formattedOptions);
           setFilteredOptions(formattedOptions); // Initialize filtered options with all users
 
           // Restore previous selection if exists
           if (context.extension.fieldValue) {
-            setValue(context.extension.fieldValue);
+            setValue(context.extension.fieldValue); // Restore accountId
           }
         }
       } catch (error) {
@@ -57,8 +57,9 @@ const Edit = () => {
     try {
       console.log('[Edit Component] Submitting value:', value);
 
-      // Save the selected value (account ID) to the custom field
+      // Submit the selected user's accountId
       await view.submit(value);
+      console.log('[Edit Component] Submitted field value:', value);
     } catch (e) {
       console.error('[Edit Component] Submit Error:', e);
     }

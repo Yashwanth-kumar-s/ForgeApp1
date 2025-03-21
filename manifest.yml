@@ -1,8 +1,8 @@
 modules:
   jira:customField:
     - key: partnerfield9-custom-field-ui-kit-2-hello-world
-      name: PartnerField9
-      description: A hello world custom field.
+      name: PartnerField11
+      description: A custom field for selecting users.
       type: string
       render: native
       resource: main
